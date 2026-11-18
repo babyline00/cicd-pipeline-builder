@@ -1,0 +1,46 @@
+// AI-Powered CI/CD Pipeline Builder — Prisma schema
+// SQLite is used as the local-first store. Pipeline graphs are serialized as
+// JSON strings in `graph`; compiled YAML output is cached in `yamlCache`.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Pipeline {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  graph       String
+  yamlCache   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  secrets     Secret[]
+  simulations Simulation[]
+}
+
+model Secret {
+  id          String   @id @default(cuid())
+  pipelineId  String
+  pipeline    Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+
+  @@index([pipelineId])
+}
+
+model Simulation {
+  id         String   @id @default(cuid())
+  pipelineId String
+  pipeline   Pipeline @relation(fields: [pipelineId], references: [id], onDelete: Cascade)
+  logs       String
+  success    Boolean
+  startedAt  DateTime @default(now())
+
+  @@index([pipelineId])
+}
